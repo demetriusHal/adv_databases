@@ -22,7 +22,7 @@ USE "mydb" ;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS log (
   "id" SERIAL,
-  "time" DATE NULL,
+  "time" TIMESTAMP NULL,
   "source_ip" VARCHAR(32) NULL,
   "type" VARCHAR(32) NULL,
   PRIMARY KEY ("id"));
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS access (
   PRIMARY KEY ("log_id"),
   CONSTRAINT "fk_access_log"
     FOREIGN KEY ("log_id")
-    REFERENCES "mydb"."log" ("id")
+    REFERENCES log ("id")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 
@@ -52,14 +52,15 @@ CREATE TABLE IF NOT EXISTS access (
 -- Table "mydb"."blocks"
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS blocks (
+  "id" SERIAL,
   "log_id" INT NOT NULL,
   "dest_ip" VARCHAR(32) NULL,
   "block_requested" VARCHAR(32) NULL,
   "size" INT NULL,
-  PRIMARY KEY ("log_id"),
+  PRIMARY KEY ("id", "log_id"),
   CONSTRAINT "fk_rest_logs_log1"
     FOREIGN KEY ("log_id")
-    REFERENCES "mydb"."log" ("id")
+    REFERENCES log("id")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 
@@ -79,7 +80,7 @@ CREATE TABLE IF NOT EXISTS my_user (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS queries(
   "user_name" VARCHAR(45) NOT NULL,
-  "time" DATE NULL,
+  "time" TIMESTAMP NULL,
   "query" VARCHAR(128) NULL,
   PRIMARY KEY ("user_name"),
   CONSTRAINT "fk_table1_user1"
