@@ -32,13 +32,13 @@ CREATE TABLE IF NOT EXISTS log (
 -- Table "mydb"."access"
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS access (
-  "user_id" VARCHAR(32) NOT NULL,
+  "user_id" VARCHAR(32) NULL,
   "http_method" VARCHAR(32) NULL,
-  "resource" VARCHAR(45) NULL,
+  "resource" VARCHAR(256) NULL,
   "response" VARCHAR(32) NULL,
   "response_size" INT NULL,
-  "referer" VARCHAR(45) NULL,
-  "user_string" VARCHAR(64) NULL,
+  "referer" VARCHAR(128) NULL,
+  "user_string" VARCHAR(256) NULL,
   "log_id" INT NOT NULL,
   PRIMARY KEY ("log_id"),
   CONSTRAINT "fk_access_log"
