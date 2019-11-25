@@ -14,86 +14,79 @@ SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,N
 -- -----------------------------------------------------
 -- Schema mydb
 -- -----------------------------------------------------
-CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
-USE `mydb` ;
+CREATE SCHEMA IF NOT EXISTS "mydb" DEFAULT CHARACTER SET utf8 ;
+USE "mydb" ;
 
 -- -----------------------------------------------------
--- Table `mydb`.`log`
+-- Table "mydb"."log"
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`log` (
-  `id` INT NOT NULL AUTO_INCREMENT,
-  `time` DATE NULL,
-  `source_ip` VARCHAR(32) NULL,
-  `type` VARCHAR(32) NULL,
-  PRIMARY KEY (`id`),
-  INDEX `IPINDEX` (`source_ip` ASC) INVISIBLE,
-  INDEX `DATEINDEX` (`time` ASC) VISIBLE)
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS log (
+  "id" SERIAL,
+  "time" DATE NULL,
+  "source_ip" VARCHAR(32) NULL,
+  "type" VARCHAR(32) NULL,
+  PRIMARY KEY ("id"));
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`access`
+-- Table "mydb"."access"
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`access` (
-  `user_id` VARCHAR(32) NOT NULL,
-  `http_method` VARCHAR(32) NULL,
-  `resource` VARCHAR(45) NULL,
-  `response` VARCHAR(32) NULL,
-  `response_size` INT NULL,
-  `referer` VARCHAR(45) NULL,
-  `user_string` VARCHAR(64) NULL,
-  `log_id` INT NOT NULL,
-  PRIMARY KEY (`log_id`),
-  CONSTRAINT `fk_access_log`
-    FOREIGN KEY (`log_id`)
-    REFERENCES `mydb`.`log` (`id`)
+CREATE TABLE IF NOT EXISTS access (
+  "user_id" VARCHAR(32) NOT NULL,
+  "http_method" VARCHAR(32) NULL,
+  "resource" VARCHAR(45) NULL,
+  "response" VARCHAR(32) NULL,
+  "response_size" INT NULL,
+  "referer" VARCHAR(45) NULL,
+  "user_string" VARCHAR(64) NULL,
+  "log_id" INT NOT NULL,
+  PRIMARY KEY ("log_id"),
+  CONSTRAINT "fk_access_log"
+    FOREIGN KEY ("log_id")
+    REFERENCES "mydb"."log" ("id")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`blocks`
+-- Table "mydb"."blocks"
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`blocks` (
-  `log_id` INT NOT NULL,
-  `dest_ip` VARCHAR(32) NULL,
-  `block_requested` VARCHAR(32) NULL,
-  `size` INT NULL,
-  PRIMARY KEY (`log_id`),
-  CONSTRAINT `fk_rest_logs_log1`
-    FOREIGN KEY (`log_id`)
-    REFERENCES `mydb`.`log` (`id`)
+CREATE TABLE IF NOT EXISTS blocks (
+  "log_id" INT NOT NULL,
+  "dest_ip" VARCHAR(32) NULL,
+  "block_requested" VARCHAR(32) NULL,
+  "size" INT NULL,
+  PRIMARY KEY ("log_id"),
+  CONSTRAINT "fk_rest_logs_log1"
+    FOREIGN KEY ("log_id")
+    REFERENCES "mydb"."log" ("id")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`user`
+-- Table "mydb"."user"
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`user` (
-  `email` VARCHAR(45) NULL,
-  `name` VARCHAR(45) NOT NULL,
-  `password` VARCHAR(256) NULL,
-  PRIMARY KEY (`name`))
-ENGINE = InnoDB;
+CREATE TABLE IF NOT EXISTS my_user (
+  "email" VARCHAR(45) NULL,
+  "name" VARCHAR(45) NOT NULL,
+  "password" VARCHAR(256) NULL,
+  PRIMARY KEY ("name"))
 
 
 -- -----------------------------------------------------
--- Table `mydb`.`queries`
+-- Table "mydb"."queries"
 -- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `mydb`.`queries` (
-  `user_name` VARCHAR(45) NOT NULL,
-  `time` DATE NULL,
-  `query` VARCHAR(128) NULL,
-  PRIMARY KEY (`user_name`),
-  CONSTRAINT `fk_table1_user1`
-    FOREIGN KEY (`user_name`)
-    REFERENCES `mydb`.`user` (`name`)
+CREATE TABLE IF NOT EXISTS queries(
+  "user_name" VARCHAR(45) NOT NULL,
+  "time" DATE NULL,
+  "query" VARCHAR(128) NULL,
+  PRIMARY KEY ("user_name"),
+  CONSTRAINT "fk_table1_user1"
+    FOREIGN KEY ("user_name")
+    REFERENCES my_user("name")
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
