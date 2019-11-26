@@ -102,23 +102,25 @@ def nSFileRead():
             #get date
             date = reformatDate(line[0:2])
             #get sourceIp
-            source = line[sourceIp]
+            source = line[sourceIp][:-6]
             #get type
             logtype = line[typeField]
+            if (logtype != 'replicate' and logtype != 'delete'):
+                line = fp.readline()
+                continue
             #get all blocks
             (blklist, ofst) = getAllBlocks(line)
             #get dest ip
             ofst += 2
             dests = []
             while ofst < len(line):
-                dests.append(line[ofst])
+                dests.append(line[ofst][:-6])
                 ofst += 1
              
 
             insertEntry(date,source,logtype,blklist,dests)
             #read next
-            if (cnt > 1000):
-                break
+
             line = fp.readline()
 
     #commit
@@ -139,7 +141,8 @@ def DXFileRead():
     blockPrefix = 'blk_'
     destIpOffset = 11
     sizeOffset = 14
-
+    sourceIp = ''
+    dest = ''
 
     def insertEntry(date,source, logtype, block, dest, size):
         global startId
@@ -147,9 +150,10 @@ def DXFileRead():
         #first table, 
         query = ''' insert into log (time, source_ip, type)
         values ('{}', '{}', '{}')'''.format(date, source, logtype)
+        print query
         cursor.execute(query)
         #second table missing quote on PURPOSE
-
+        
         if size != 'NULL':
             size = "'"+size+"'" 
 
@@ -160,7 +164,7 @@ def DXFileRead():
                     block,
                     size
                 )
-
+       
         cursor.execute(query)
            
     cnt = 0
@@ -178,16 +182,19 @@ def DXFileRead():
             #hacky fix to check for Served case
             if line[6] == 'Served':
                 sourceIp = 5
-                typefield = 6
+                typeField = 6
                 blocksStart = 8
                 destIpOffset = 10
                 sizeOffset = 13
+                dest = line[destIpOffset][1:]
             elif line[5] == 'Receiving' or line[5] == 'Received':
                 sourceIp = 9
                 typeField = 5
                 blocksStart = 7
                 destIpOffset = 11
                 sizeOffset = 14
+
+                dest = line[destIpOffset][1:-6]
             else:
                 line = fp.readline()
                 continue
@@ -195,13 +202,13 @@ def DXFileRead():
             #get date
             date = reformatDate(line[0:2])
             #get sourceIp
-            source = line[sourceIp]
+            source = line[sourceIp][1:-6]
             #get type
             logtype = line[typeField]
             #get block
             block = line[blocksStart][4:]
             #get dest
-            dest = line[destIpOffset]
+            #dest = line[destIpOffset][1:-6]
             #get size
             size = 'NULL'
             if (sizeOffset < len(line)):
@@ -212,8 +219,6 @@ def DXFileRead():
 
             #read next
             line = fp.readline()
-            if (cnt > 1000):
-                break
 
     #commit
     conn.commit()
@@ -263,31 +268,38 @@ def accessFileRead():
 
 
     import csv
-    df = pd.read_csv('logs/access_small.log', sep=' ', quotechar='"',  engine='python', error_bad_lines=False)
+    print 'Starting Pandas'
+    df = pd.read_csv('logs/access_medium.log', sep=' ', quotechar='"',  engine='python', error_bad_lines=False)
+    print 'Starting'
     dates = [processDate(df.date[i]) for i in range(df.shape[0])]
     reqRes = [processRequest(df.cmd[i]) for i in range(df.shape[0])]
 
+    print 'Starting'
+    cnt = 0
     for i in range(df.shape[0]):
+        cnt += 1
         startId = startId + 1
         query = ''' insert into log (time, source_ip, type)
         values ('{}', '{}', 'Access')'''.format(dates[i], df.sourceIp[i])
         print query
         cursor.execute(query)
 
-        user = 'NULL' if (df.user[i] == '-') else "'"+ df.user[i]+"'"
-        print df.referer[i]
-        referer = 'NULL' if (df.referer[i] == '-') else "'"+ df.referer[i]+"'"
-        resSize = 'NULL' if (df.resSize[i] == '-') else "'"+ df.resSize[i]+"'"
+        user = 'NULL' if (df.user[i] == '-' or pd.isna(df.user[i])) else "'"+ df.user[i]+"'"
+        print cnt, df.referer[i]
+        print df.agent[i]
+        referer = 'NULL' if (df.referer[i] == '-' or pd.isna(df.referer[i])) else "'"+ df.referer[i][0:126].replace("'",'\\"')+"'"
+        resSize = 'NULL' if (df.resSize[i] == '-') else df.resSize[i]
+        agent = 'NULL' if (df.agent[i] == '-' or pd.isna(df.agent[i])) else df.agent[i]
         query = ''' insert into access (user_id, http_method, resource, response, response_size, referer, user_string, log_id)
         values ({}, '{}', '{}','{}',{},{},'{}',{})
         '''.format(
             user,
             reqRes[i][0],
-            reqRes[i][1],
+            reqRes[i][1].replace("'",'\\"')[0:256],
             df.resp[i],
             resSize,
-            referer,
-            df.agent[i],
+            referer[0:128],
+            agent[0:256],
             startId
         )
         print query
@@ -298,9 +310,9 @@ def accessFileRead():
 
 
 
+DXFileRead()
 
-#nSFileRead()
-#DXFileRead()
+nSFileRead()
 
 accessFileRead()
 
